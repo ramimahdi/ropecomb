@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the paper."
+title: "RopeComb: reference implementation"
+version: 1.0.0
+license: MIT
+authors:
+  - family-names: Mahdi
+    given-names: Rami N.
+    affiliation: "Interesting Machines LLC"
+preferred-citation:
+  type: article
+  title: "The RopeComb: A Configurable Rope-and-Pulley Transmission for Impedance-Matched Mechanical Launch"
+  authors:
+    - family-names: Mahdi
+      given-names: Rami N.
+      affiliation: "Interesting Machines LLC"
+  year: 2026
