@@ -143,9 +143,17 @@ These are the model's, not the code's, and they are stated in the paper.
 See `CITATION.cff`. The paper is the primary reference; cite this package if you
 use the implementation itself.
 
-## Licence
+## License & Intellectual Property
 
-MIT, see `LICENSE`. The paper is separately licensed CC BY 4.0.
+This repository contains a mix of open-source software, open-access academic media, and proprietary hardware designs. Please review the following specific intellectual property notices:
 
-Note that the MIT licence conveys no patent rights. Aspects of the mechanism are
-the subject of a pending patent application.
+1. **Software Code (MIT License)**
+   All simulation scripts, physics models, and interactive web code (`.py`, `.js`, `.html`, etc.) in this repository are released under the MIT License. You are free to use, copy, modify, distribute, and run these digital assets.
+
+2. **Academic Paper & Media (CC BY 4.0)**
+   The manuscript *The RopeComb: A Configurable Rope-and-Pulley Transmission for Impedance-Matched Mechanical Launch* and all associated diagrams, figures, and data are licensed under a Creative Commons Attribution 4.0 International License (CC BY 4.0). You may share and adapt this material, provided proper attribution is given to Rami N. Mahdi and Interesting Machines LLC.
+
+3. **Physical Hardware & Mechanism (Patent Pending)**
+   The MIT License in this repository applies solely to the software source code and digital assets. No license, express or implied, is granted to any physical hardware, mechanisms, or patents described, simulated, or depicted by this repository.
+
+   A provisional patent application covering the physical RopeComb transmission apparatus and its specific geometries has been filed by Interesting Machines LLC (Patent Pending). The physical mechanisms remain the proprietary intellectual property of the author and Interesting Machines LLC. For details, see [PATENTS.txt](PATENTS.txt).
