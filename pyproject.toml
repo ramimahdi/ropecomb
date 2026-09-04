@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ropecomb"
-version = "1.0.0"
-description = "Reference implementation of the RopeComb variable-ratio rope-and-pulley transmission"
+version = "2.0.0"
+description = "Reference implementation of single- and dual-array RopeComb variable-ratio transmissions"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Rami N. Mahdi" }]
-keywords = ["mechanism", "transmission", "launch", "catapult", "least-squares"]
+keywords = ["mechanism", "transmission", "launch", "catapult", "least-squares", "dual-array"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
@@ -26,6 +26,9 @@ dev = ["pytest>=7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+dualarray_ropecomb = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
