@@ -19,6 +19,7 @@ print(f"{'fixed-stage ratio k':<32}" + "".join(f"{c.k:>12d}" for c in cases))
 print(f"{'fall split  n1 : n2':<32}" + "".join(f"{c.n_lo:>7d}:{c.n_hi:<4d}" for c in cases))
 print(f"{'array widths (m)':<32}" + "".join(f"{c.width_lo:.2f}/{c.width_hi:.2f}".rjust(12) for c in cases))
 print(f"{'guide-load imbalance':<32}" + "".join(f"{100*c.imbalance:>11.1f}%" for c in cases))
+print(f"{'  against mirror-symmetric':<32}" + "".join(f"{100*abs(c.n_hi - c.n_lo)/c.k:>11.1f}%" for c in cases))
 
 print("\npeak-to-mean, compliant")
 

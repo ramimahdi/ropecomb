@@ -155,6 +155,15 @@ and `n2` falls with `n1 + n2 = k`, and the net ratio the payload sees is
 G_net(d) = n1 * G1(d) + n2 * G2(d),        n1 + n2 = k
 ```
 
+That weighting is exact for any reeving, and the reason is worth seeing because
+the same count gives the stage ratio. Each segment of the output member changes
+in length by the travel of whichever movable elements it touches, so summing over
+segments returns the expression above with `n_i` the number of segments touching
+element `i`. With `p` sheaves distributed between the two elements the output
+member has `p+1` segments, and every one but the last touches both, so
+`n1 + n2 = 2p + 1`. No stationary sheave is needed anywhere in the stage, which
+is what keeps its transmission loss low.
+
 Mirror symmetry is the case `G1 = G2` and `n1 = n2`. It is a reasonable default
 and the second-best choice, but it cannot improve the force profile, and the
 identity shows why: with `G1 = G2 = G`, `n1*G + n2*G = k*G`, which is exactly the
@@ -173,8 +182,8 @@ smaller ratio. When the paths are identical this reduces to `G1 : G2 = n2 : n1`,
 and adding `n1 = n2` recovers mirror symmetry. Odd `k` cannot satisfy `n1 = n2`
 at all, so the structural imbalance `|n1 - n2| / k` is 33% at `k=3`, 20% at
 `k=5`, 14% at `k=7`; odd `k` is common for `k >= 5` because two counter-moving
-travelling blocks give `k = 2p+1`, so the asymmetric case is the usual one rather
-than the exception.
+travelling elements give `k = 2p+1`, so the asymmetric case is the usual one
+rather than the exception.
 
 ### Sixty-second tour
 
@@ -206,6 +215,7 @@ fixed-stage ratio k                     7          9
 fall split  n1 : n2                   3:4        4:5
 array widths (m)                1.95/1.98  1.89/1.55
 guide-load imbalance                 8.1%       7.0%
+  against mirror-symmetric           14.3%      11.1%
 
 peak-to-mean, compliant
   single array (= mirror pair)        1.40       2.19
@@ -214,14 +224,18 @@ peak-to-mean, compliant
 
 The "single array" row is also the mirror-symmetric row, by the identity above.
 That gap — 1.40 to 1.12, and 2.19 to 1.48 — is what the second array buys once
-it is allowed to differ from the first.
+it is allowed to differ from the first. On the peak carriage reaction of about
+230 kN the imbalance figures are 19.1 kN against 33.7 kN at `k=7` and 16.0 kN
+against 25.3 kN at `k=9`, so the unequal arrays take 14.6 kN and 9.3 kN off the
+guide bearings. `paper2/lateral_load_kn.py` reproduces the conversion.
 
 ### Engagement ordering
 
 Which array engages first is not free. The array that engages first must drive
 the movable element carrying the **fewer** falls, `floor(k/2)`. Assigning it the
-other way costs roughly half again as much residual imbalance at every point on
-the force-uniformity trade curve (at `k=5`, median 8.9% against 14.5%). The
+other way costs substantially more residual imbalance across almost the whole
+force-uniformity trade curve: at `k=5` the best of forty restarts gives 8.9%
+against 14.5% at `lambda = 0.3`, and 6.7% against 15.4% at `lambda = 1`. The
 alternation of engagements between the two arrays is a *consequence* of the fit,
 not a constraint imposed on it — a free fit alternates unaided.
 
@@ -239,29 +253,46 @@ not a constraint imposed on it — a free fit alternates unaided.
 | script (in `paper2/`) | what it produced in the paper |
 |---|---|
 | `refit_16471.py` | both configured designs at the derived rope stiffness; writes `designs_16471.json` |
-| `lead_order_study.py` | the lead-assignment comparison, 40 restarts per cell, medians as well as best fits |
-| `lead_order_curves.py` | the two force-uniformity / imbalance trade curves |
+| `lead_order_study.py` | the lead-assignment comparison, 40 restarts per cell |
+| `lead_order_curves.py` | the two force-uniformity / imbalance trade curves, 14 restarts per point |
 | `fit_k5.py` | the `k=5` fits, including the order-free variant showing alternation arises unaided |
 | `k_parity_study.py` | the even-against-odd stage-ratio comparison |
 | `stage_parity.py` | the stage energy index `p/k²` |
 | `check_release_window.py` | sensitivity of peak-to-mean to the release window |
 | `stiffness_sensitivity.py` | the rope-stiffness band |
-| `make_run_figures.py`, `make_fig_arch.py` | the paper's run and architecture figures (Figures 2, 12, 13) |
+| `seed_benefit.py` | what the two-stage seed buys over random restarts |
+| `lateral_load_kn.py` | the lateral guide load of both designs in newtons |
+| `make_run_figures.py` | the run figures (Figures 11 and 12) |
+| `make_fig_arch.py` | the architecture schematic (Figure 2) |
+| `make_design_figures.py` | the design and comparison charts (Figures 3, 4, 6–10) |
 
-*Note on figures:* Paper 1's figures were drawn by external scripts omitted from the repository. For Paper 2, the repo goes beyond that promise by including full figure-generation scripts (`make_run_figures.py` and `make_fig_arch.py`) under `paper2/`.
+**Note on figures.** Paper 1's figures were drawn by external scripts omitted
+from the repository. For Paper 2 the repo goes beyond that promise: every figure
+except the rendered schematic of Figure 1 and the stage drawing of Figure 5,
+which is reproduced from Paper 1, is generated by a script under `paper2/`.
 
-### Conventions carried over, and one worth restating
+### Conventions carried over, and two worth restating
 
-Everything in the single-array conventions section above still applies. One is
-worth restating because the dual-array numbers are sensitive to it: the rope
-stiffness is `k = EA/L = 16,471 N/m` for 2 mm Dyneema R3, with `L` the 15.8 m
-runway plus about a metre at the blocks and a metre spare. Across the grades and
-routing lengths a designer would actually choose — 15,730 N/m for SK75 over
-17.8 m up to 19,663 N/m for a top-end SK99 fibre — the compliant peak-to-mean
-moves by 0.01 at `k=7` and 0.03 at `k=9`. It is *not* insensitive to stiffness in
-general; taken over an unphysical 8,000 to 30,000 N/m it ranges from 1.04 to
-1.61. What makes it stable is that the material and length choices are themselves
+Everything in the single-array conventions section above still applies. Two are
+worth restating because the dual-array numbers depend on them.
+
+**Rope stiffness.** `K_rope = EA/L = 16,471 N/m` for 2 mm Dyneema R3, with `L`
+the 15.8 m of payload travel plus about a metre at the elements and a metre
+spare. Across the grades and routing lengths a designer would actually choose —
+15,730 N/m for SK75 over 17.8 m up to 19,663 N/m for a top-end SK99 fibre — the
+compliant peak-to-mean moves by 0.02 at `k=7` and 0.04 at `k=9`. It is *not*
+insensitive to stiffness in general: taken over an unphysical 8,000 to
+30,000 N/m it ranges from 1.04 to 1.40 at `k=7` and 1.11 to 1.61 at `k=9`. What
+makes it stable is that the material and length choices are themselves
 constrained.
+
+**Two different measurement windows.** Payload forces are taken over the first
+99.5% of the *simulated time*, the payload being released before the terminal
+traction-loss pulse. Lateral loads are geometric, taken from the fitted ratios
+against carriage displacement over the whole design stroke. The two are not
+interchangeable: under the compliant integrator the first 99.5% of the time
+carries the carriage to 99.8% of `d_max`, and restricting the geometry to that
+span lowers the imbalance figures by 0.4 and 0.2 percentage points.
 
 ### Limitations specific to the dual array
 
