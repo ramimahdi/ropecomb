@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.npy
+figs/*.png
+!figs/drawn/*.png
+figs/*.tiff
+.DS_Store

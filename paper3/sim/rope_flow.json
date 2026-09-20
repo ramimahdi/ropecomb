@@ -1,0 +1,116 @@
+{
+ "<9,5> single": {
+  "drawing (deepest at anchor)": {
+   "total_rad_m": 22.956925018782286,
+   "worst_rad_m": 2.4149798449162274
+  },
+  "reversed (deepest at entry)": {
+   "total_rad_m": 24.606001750016446,
+   "worst_rad_m": 5.913635454599509
+  }
+ },
+ "<7,7> array 1": {
+  "drawing (deepest at anchor)": {
+   "total_rad_m": 15.844509345506246,
+   "worst_rad_m": 2.266859001178866
+  },
+  "reversed (deepest at entry)": {
+   "total_rad_m": 16.481699793882065,
+   "worst_rad_m": 4.221649961750858
+  },
+  "searched placement": {
+   "total_rad_m": 15.844743790364241,
+   "worst_rad_m": 2.266859001178866
+  },
+  "best of all orders": {
+   "total_rad_m": 15.844509345506246,
+   "entry_to_anchor": [
+    6,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+   ]
+  }
+ },
+ "<7,7> array 2": {
+  "drawing (deepest at anchor)": {
+   "total_rad_m": 9.097526709356794,
+   "worst_rad_m": 1.4560454650148793
+  },
+  "reversed (deepest at entry)": {
+   "total_rad_m": 9.580879370055346,
+   "worst_rad_m": 2.9211188920741082
+  },
+  "searched placement": {
+   "total_rad_m": 9.162025972634986,
+   "worst_rad_m": 1.8688069854792464
+  },
+  "best of all orders": {
+   "total_rad_m": 9.097309672617952,
+   "entry_to_anchor": [
+    5,
+    6,
+    4,
+    3,
+    2,
+    1,
+    0
+   ]
+  }
+ },
+ "<8:6,7> array 1": {
+  "drawing (deepest at anchor)": {
+   "total_rad_m": 15.999582762939564,
+   "worst_rad_m": 2.264124098063272
+  },
+  "reversed (deepest at entry)": {
+   "total_rad_m": 16.65377429308252,
+   "worst_rad_m": 4.2229178193012356
+  },
+  "searched placement": {
+   "total_rad_m": 16.426193092530916,
+   "worst_rad_m": 4.2229178193012356
+  },
+  "best of all orders": {
+   "total_rad_m": 15.999582762444454,
+   "entry_to_anchor": [
+    6,
+    7,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+   ]
+  }
+ },
+ "<8:6,7> array 2": {
+  "drawing (deepest at anchor)": {
+   "total_rad_m": 9.035190691218098,
+   "worst_rad_m": 1.461513714989133
+  },
+  "reversed (deepest at entry)": {
+   "total_rad_m": 9.490684605177254,
+   "worst_rad_m": 2.9180600195847206
+  },
+  "searched placement": {
+   "total_rad_m": 9.417985425422781,
+   "worst_rad_m": 2.9180600195847206
+  },
+  "best of all orders": {
+   "total_rad_m": 9.035190691218098,
+   "entry_to_anchor": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+   ]
+  }
+ }
+}
