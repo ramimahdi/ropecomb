@@ -5,3 +5,10 @@ figs/*.png
 !figs/drawn/*.png
 figs/*.tiff
 .DS_Store
+*.tex
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
