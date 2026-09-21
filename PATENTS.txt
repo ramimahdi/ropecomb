@@ -1,1 +1,31 @@
-The MIT License in this repository applies solely to the software source code and digital assets. No license, express or implied, is granted to any physical hardware, mechanisms, or patents (including pending provisional patent applications) described, simulated, or depicted by this software. The physical single-array and dual-array transmission apparatus, guide-load balancing mechanisms, and specific geometries remain the proprietary intellectual property of the author and Interesting Machines LLC.
+PATENT NOTICE
+
+The MIT License in this repository is a copyright licence. It grants rights in
+the source code and other digital assets here. It does not grant, and is not
+intended to grant, any licence, express or implied, under any patent.
+
+The transmissions this software describes and simulates are the subject of
+United States provisional patent applications filed by Interesting Machines LLC:
+
+  No. 64/124,997, filed 3 August 2026
+      the single-array architecture
+
+  No. 64/139,129, filed 23 August 2026
+      the dual-array architecture, including the balance condition, the
+      engagement-ordering rule and the design method
+
+  No. 64/146,285, filed 1 September 2026
+      the passive release and arrest terminal stage
+
+  No. 64/158,432, filed 19 September 2026
+      the member-count condition, the span order and placement along the
+      arrays, the merged-seed configuring method, and operation in reverse as
+      an arresting transmission
+
+No licence under these applications, or under any patent issuing from them, is
+granted by the MIT License, by the publication of this software, or by its use.
+The physical single-array and dual-array transmission apparatus, the guide-load
+balancing arrangements and the specific geometries remain the intellectual
+property of the author and Interesting Machines LLC.
+
+Enquiries about a patent licence: ramimahdi@interestingmachines.com
