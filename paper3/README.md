@@ -103,4 +103,6 @@ not bit for bit. The frozen JSON files are what the paper's tables quote.
 
 ## Licence
 
-Code: MIT, see `LICENSE`. This is a copyright licence only; see `PATENTS`.
+Code: MIT, under the repository's `LICENSE` at the root. That is a copyright
+licence only; the root `PATENTS.txt` gives the patent notice and lists the
+provisional applications covering the transmission.

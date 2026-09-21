@@ -3,21 +3,39 @@ message: "If you use this software, please cite both the software and the paper.
 title: "RopeComb: reference implementation"
 version: 3.0.0
 license: MIT
+repository-code: "https://github.com/ramimahdi/ropecomb"
+url: "https://ropecomb.com"
 authors:
   - family-names: Mahdi
     given-names: Rami N.
     affiliation: "Interesting Machines LLC"
+    orcid: "https://orcid.org/0009-0000-0817-3887"
+keywords:
+  - mechanism
+  - transmission
+  - launch
+  - catapult
+  - least-squares
+  - dual-array
 preferred-citation:
   type: article
-  title: "The RopeComb: A Configurable Rope-and-Pulley Transmission for Impedance-Matched Mechanical Launch"
+  title: "The dual-array RopeComb: a guide-balanced transmission with synthesisable rising mechanical advantage for impedance-matched launch"
   authors:
     - family-names: Mahdi
       given-names: Rami N.
       affiliation: "Interesting Machines LLC"
+      orcid: "https://orcid.org/0009-0000-0817-3887"
   year: 2026
 references:
   - type: article
     title: "Dual-Array Variable Mechanical Advantage Transmissions with Guide-Load Balancing for Mechanical Launchers"
+    authors:
+      - family-names: Mahdi
+        given-names: Rami N.
+        affiliation: "Interesting Machines LLC"
+    year: 2026
+  - type: article
+    title: "The RopeComb: A Configurable Rope-and-Pulley Transmission for Impedance-Matched Mechanical Launch"
     authors:
       - family-names: Mahdi
         given-names: Rami N.

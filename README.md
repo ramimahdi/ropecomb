@@ -434,11 +434,11 @@ This repository contains a mix of open-source software, open-access academic med
 1. **Software Code (MIT License)**
    All simulation scripts, physics models, and interactive web code (`.py`, `.js`, `.html`, etc.) in this repository are released under the MIT License. You are free to use, copy, modify, distribute, and run these digital assets.
 
-2. **Academic Paper & Media (CC BY 4.0)**
-   The manuscript *The RopeComb: A Configurable Rope-and-Pulley Transmission for Impedance-Matched Mechanical Launch* and all associated diagrams, figures, and data are licensed under a Creative Commons Attribution 4.0 International License (CC BY 4.0). You may share and adapt this material, provided proper attribution is given to Rami N. Mahdi and Interesting Machines LLC.
+2. **Academic Papers & Media (CC BY 4.0)**
+   The manuscripts this repository accompanies, and all associated diagrams, figures, and data, are licensed under a Creative Commons Attribution 4.0 International License (CC BY 4.0). You may share and adapt this material, including commercially, provided proper attribution is given to Rami N. Mahdi and Interesting Machines LLC. As that licence itself provides, it grants no rights under any patent.
 
 3. **Physical Hardware & Mechanism (Patent Pending)**
-   The MIT License in this repository applies solely to the software source code and digital assets. No license, express or implied, is granted to any physical hardware, mechanisms, or patents described, simulated, or depicted by this repository.
+   The MIT License in this repository is a copyright licence. It applies to the source code and digital assets here and grants no licence, express or implied, under any patent.
 
-   Provisional patent applications covering the physical single-array and dual-array RopeComb transmission apparatus, guide-load balancing mechanisms, and specific geometries have been filed by Interesting Machines LLC (Patent Pending). The physical mechanisms remain the proprietary intellectual property of the author and Interesting Machines LLC. For details, see [PATENTS.txt](PATENTS.txt).
+   Four United States provisional patent applications covering the physical single-array and dual-array RopeComb transmission apparatus, the guide-load balancing arrangements, the member-count condition and the configuring methods have been filed by Interesting Machines LLC: Nos. 64/124,997, 64/139,129, 64/146,285 and 64/158,432. The physical mechanisms remain the intellectual property of the author and Interesting Machines LLC. For the numbers, dates and subject matter of each, see [PATENTS.txt](PATENTS.txt).
 
