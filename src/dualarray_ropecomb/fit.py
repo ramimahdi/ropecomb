@@ -26,8 +26,8 @@ from .ordering import interleaved_slots
 from .weighting import falls, guide_imbalance
 
 __all__ = [
-    "R_FLOOR", "encode", "seed_two_stage", "fit_dual_staged", "fit_dual",
-    "DualFitResult"
+    "R_FLOOR", "encode", "seed_two_stage", "seed_merged", "jitter_seed",
+    "fit_dual_staged", "fit_dual", "DualFitResult"
 ]
 
 R_FLOOR = 0.05  # 10 cm minimum span (5 cm half-width) per paper section 5.8
@@ -51,7 +51,8 @@ def _unpack(p: np.ndarray, N_lo: int, N_hi: int, d_max: float,
     cum = np.cumsum(gaps)
     s_norm = cum / max(cum[-1], 1e-9)
 
-    s_span = float(1.0 / (1.0 + math.exp(-float(p[n]))))
+    val = max(-60.0, min(60.0, float(p[n])))
+    s_span = float(1.0 / (1.0 + math.exp(-val)))
     s_all = s_norm * (s_span * d_max)
 
     R_all = R_FLOOR + _softplus(p[n + 1: n + 1 + n])
@@ -117,6 +118,91 @@ def seed_two_stage(R_star: Sequence[float], s_star: Sequence[float],
     return R.copy(), s.copy(), R.copy(), mid
 
 
+def seed_merged(target, N_lo: int, N_hi: int, k: int, *,
+                width_budget: float, width_relief: float = 3.0,
+                seed: int = 0, max_nfev: int = 20000
+                ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[int]]:
+    """Merged seed: fit N_lo + N_hi members at half the stage ratio, then deal them.
+
+    A dual array at stage ratio k with two arrays of N_lo and N_hi members has,
+    late in the stroke, about the reach of ONE array of N_lo + N_hi members at
+    stage ratio k/2. So a single-array fit at that reduced ratio is a feasible
+    starting point for the pair, and dealing its members alternately in
+    engagement order splits it into two arrays that already interleave.
+
+    The leading array takes the first member and any excess, so the members the
+    leading array carries beyond alternation engage LAST. Dealing them first
+    costs a factor of six in peak imbalance, and dealing them in the middle two
+    to five; the rule is not cosmetic.
+
+    The width cap is relaxed by ``width_relief`` for the seed fit only, because
+    the merged array is the two real arrays laid end to end and must not be
+    squeezed into one array's budget.
+
+    Parameters
+    ----------
+    target : TargetSpec
+    N_lo, N_hi : int
+        Members on the leading (fewer falls) and trailing arrays.
+    k : int
+        The FULL stage ratio; the seed fit uses k/2.
+    seed : int
+        Restart index passed to the single-array fit.
+
+    Returns
+    -------
+    (R_lo, s_lo, R_hi, s_hi, order)
+        The dealt geometry and the slot assignment it realises.
+    """
+    from ropecomb.fit import fit_array
+
+    N = int(N_lo) + int(N_hi)
+    merged = fit_array(target, N, k / 2.0, seed=seed,
+                       max_width=width_relief * float(width_budget),
+                       max_nfev=max_nfev)
+
+    order = interleaved_slots(int(N_lo), int(N_hi))
+    R = np.asarray(merged.R, dtype=float)
+    s = np.asarray(merged.s, dtype=float)
+    idx = np.argsort(s)
+    R, s = R[idx], s[idx]
+
+    R_lo, s_lo, R_hi, s_hi = [], [], [], []
+    for slot, Ri, si in zip(order, R, s):
+        if slot == 0:
+            R_lo.append(Ri); s_lo.append(si)
+        else:
+            R_hi.append(Ri); s_hi.append(si)
+    return (np.asarray(R_lo), np.asarray(s_lo),
+            np.asarray(R_hi), np.asarray(s_hi), order)
+
+
+def jitter_seed(R_lo, s_lo, R_hi, s_hi, d_max: float, *, sigma: float = 0.3,
+                rng: Optional[np.random.Generator] = None):
+    """Perturb a dealt seed log-normally, for restarts that stay feasible.
+
+    The seed fit is effectively unique: at half the stage ratio and with a
+    generous width cap, independent random starts land on the same geometry to
+    within a few millimetres. Restarting from fresh random starts therefore
+    explores nothing, and restarting from the seed unperturbed explores nothing
+    either. Perturbing spans and engagement gaps by lognormal(0, sigma) keeps the
+    ordering and the feasibility of the seed while moving it.
+    """
+    rng = np.random.default_rng() if rng is None else rng
+
+    def one(Rx, sx):
+        o = np.argsort(sx)
+        Rx = np.asarray(Rx, dtype=float)[o]
+        sx = np.asarray(sx, dtype=float)[o]
+        gaps = np.diff(np.concatenate([[0.0], sx])) * rng.lognormal(0.0, sigma, len(sx))
+        s_new = np.cumsum(gaps)
+        s_new = s_new * min(1.0, 0.98 * d_max / max(float(s_new[-1]), 1e-9))
+        return np.maximum(R_FLOOR, Rx * rng.lognormal(0.0, sigma, len(Rx))), s_new
+
+    (R_lo2, s_lo2), (R_hi2, s_hi2) = one(R_lo, s_lo), one(R_hi, s_hi)
+    return R_lo2, s_lo2, R_hi2, s_hi2
+
+
 def _residuals(p: np.ndarray, d: np.ndarray, G_star: np.ndarray,
                N_lo: int, N_hi: int, n_lo: int, n_hi: int,
                d_max: float, max_width: float,
@@ -177,7 +263,11 @@ def fit_dual_staged(target_or_d: Union[TargetSpec, Sequence[float]],
                     lam_balance: float = 1.0,
                     lam_width: float = 50.0,
                     jitter: float = 0.0,
-                    seed: int = 0) -> DualFitResult:
+                    seed: int = 0,
+                    N_lo: Optional[int] = None,
+                    N_hi: Optional[int] = None,
+                    restarts: int = 1,
+                    jitter_sigma: float = 0.3) -> DualFitResult:
     """Execute the three-phase staged fit for a dual-array transmission.
 
     Parameters
@@ -199,70 +289,117 @@ def fit_dual_staged(target_or_d: Union[TargetSpec, Sequence[float]],
     lam_width : float
         Weight on the width budget constraint penalty.
     jitter : float
-        Standard deviation of random perturbation added to initial guess.
+        Standard deviation of a Gaussian perturbation on the encoded seed. Kept
+        for compatibility; ``restarts`` with ``jitter_sigma`` is the method the
+        paper uses.
     seed : int
-        Random seed for jitter.
+        Random seed.
+    N_lo, N_hi : int, optional
+        Members on the leading and trailing arrays. Give these, with a
+        TargetSpec, to seed by the merged method of :func:`seed_merged`, which
+        is what unequal member counts require: the arrays then need not have the
+        same number of members, and the excess on the leading array engages
+        last. Omit them to seed from a supplied single-array fit (R_star,
+        s_star) with equal counts, as before.
+    restarts : int
+        Number of starts. The first is the dealt seed itself; the rest are
+        log-normal perturbations of it (:func:`jitter_seed`), because the seed
+        fit is unique to within a few millimetres and fresh random starts would
+        explore nothing. The best by fit residual is returned.
+    jitter_sigma : float
+        Log-normal sigma for those perturbations.
+
+    Examples
+    --------
+    Count-balanced at k = 7, eight members leading and six trailing::
+
+        spec = target_profile(1000.0, 1.0, 10.0, 4.0, 0.1)
+        fit = fit_dual_staged(spec, k=7, N_lo=8, N_hi=6,
+                              width_budget=2.11, lam_balance=0.03, restarts=31)
     """
     if isinstance(target_or_d, TargetSpec):
+        target = target_or_d
         d = target_or_d.d
         G_star = target_or_d.G
         d_max = target_or_d.d_max
     else:
+        target = None
         d = np.asarray(target_or_d, dtype=float)
         G_star = np.asarray(G_star, dtype=float)
         d_max = float(d_max if d_max is not None else d[-1])
 
     n_lo, n_hi = falls(k)
-    N = len(R_star)
-    n = 2 * N
-    order = interleaved_slots(N, N)
 
-    R_l, s_l, R_h, s_h = seed_two_stage(R_star, s_star, d_max)
-    p0 = encode(R_l, s_l, R_h, s_h, d_max, order)
-    if jitter > 0.0:
-        p0 = p0 + np.random.default_rng(seed).normal(0.0, jitter, p0.shape)
+    if N_lo is not None or N_hi is not None:
+        if N_lo is None or N_hi is None:
+            raise ValueError("give both N_lo and N_hi, or neither")
+        if target is None:
+            raise ValueError("the merged seed needs a TargetSpec, not raw (d, G_star)")
+        N_l, N_h = int(N_lo), int(N_hi)
+        R_l, s_l, R_h, s_h, order = seed_merged(target, N_l, N_h, k,
+                                                width_budget=width_budget, seed=seed)
+    else:
+        if R_star is None or s_star is None:
+            raise ValueError("give either (N_lo, N_hi) or a single-array seed (R_star, s_star)")
+        N_l = N_h = len(R_star)
+        order = interleaved_slots(N_l, N_h)
+        R_l, s_l, R_h, s_h = seed_two_stage(R_star, s_star, d_max)
 
-    args = (d, G_star, N, N, n_lo, n_hi, d_max, width_budget, lam_balance, lam_width, order)
+    n = N_l + N_h
+    args = (d, G_star, N_l, N_h, n_lo, n_hi, d_max, width_budget, lam_balance, lam_width, order)
+    rng = np.random.default_rng(seed)
 
-    # Phase 1: freeze offsets, solve widths only
-    head = p0[:n + 1].copy()
+    def solve_from(p0: np.ndarray):
+        head = p0[:n + 1].copy()
 
-    def res_widths(q):
-        return _residuals(np.concatenate([head, q]), *args)
+        def res_widths(q):
+            return _residuals(np.concatenate([head, q]), *args)
 
-    s1 = least_squares(res_widths, p0[n + 1:], method="lm", max_nfev=3000)
-    p1 = np.concatenate([head, s1.x])
+        # Phase 1: freeze offsets, solve widths only
+        s1 = least_squares(res_widths, p0[n + 1:], method="lm", max_nfev=3000)
+        p1 = np.concatenate([head, s1.x])
+        # Phase 2: joint solve
+        return least_squares(_residuals, p1, method="lm", max_nfev=4000, args=args)
 
-    # Phase 2: joint solve
-    s2 = least_squares(_residuals, p1, method="lm", max_nfev=4000, args=args)
+    best = None
+    for start in range(max(1, int(restarts))):
+        if start == 0:
+            Rl, sl, Rh, sh = R_l, s_l, R_h, s_h
+        else:
+            Rl, sl, Rh, sh = jitter_seed(R_l, s_l, R_h, s_h, d_max,
+                                         sigma=jitter_sigma, rng=rng)
+        p0 = encode(Rl, sl, Rh, sh, d_max, order)
+        if jitter > 0.0:
+            p0 = p0 + rng.normal(0.0, jitter, p0.shape)
+        try:
+            sol = solve_from(p0)
+        except Exception:
+            continue
 
-    R_lo, s_lo, R_hi, s_hi = _unpack(s2.x, N, N, d_max, order)
-    g_lo = array_ratio(d, R_lo, s_lo)
-    g_hi = array_ratio(d, R_hi, s_hi)
-    net = n_lo * g_lo + n_hi * g_hi
-    rms = float(np.sqrt(np.mean((net - G_star) ** 2)))
-    imb = guide_imbalance(net, g_lo, g_hi, n_lo, n_hi)
+        R_lo, s_lo, R_hi, s_hi = _unpack(sol.x, N_l, N_h, d_max, order)
+        g_lo = array_ratio(d, R_lo, s_lo)
+        g_hi = array_ratio(d, R_hi, s_hi)
+        net = n_lo * g_lo + n_hi * g_hi
+        cost = float(2.0 * sol.cost)
+        if best is not None and cost >= best["cost"]:
+            continue
+        rms = float(np.sqrt(np.mean((net - G_star) ** 2)))
+        best = {
+            "cost": cost,
+            "rms": rms,
+            "imbalance": guide_imbalance(net, g_lo, g_hi, n_lo, n_hi),
+            "R_lo": R_lo, "s_lo": s_lo, "R_hi": R_hi, "s_hi": s_hi,
+            "width_lo": 2.0 * float(np.sum(R_lo)),
+            "width_hi": 2.0 * float(np.sum(R_hi)),
+            "n_lo": n_lo, "n_hi": n_hi, "k": k, "order": order,
+            "terminal": float(net[-1]), "net": net,
+            "g_lo": g_lo, "g_hi": g_hi, "solution": sol,
+            "N_lo": N_l, "N_hi": N_h, "restart": start,
+        }
 
-    res_dict = {
-        "rms": rms,
-        "imbalance": imb,
-        "R_lo": R_lo,
-        "s_lo": s_lo,
-        "R_hi": R_hi,
-        "s_hi": s_hi,
-        "width_lo": 2.0 * float(np.sum(R_lo)),
-        "width_hi": 2.0 * float(np.sum(R_hi)),
-        "n_lo": n_lo,
-        "n_hi": n_hi,
-        "k": k,
-        "order": order,
-        "terminal": float(net[-1]),
-        "net": net,
-        "g_lo": g_lo,
-        "g_hi": g_hi,
-        "solution": s2,
-    }
-    return DualFitResult(res_dict)
+    if best is None:
+        raise RuntimeError("every start failed to converge")
+    return DualFitResult(best)
 
 
 def fit_dual(target_or_d: Union[TargetSpec, Sequence[float]],

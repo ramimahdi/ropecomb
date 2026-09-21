@@ -203,10 +203,11 @@ g = net_ratio_fn(d)                  # fall-count weighted net ratio
 ### Reproducing the paper's designs
 
 ```bash
-python examples/09_reproduce_paper2_designs.py
+python examples/09_reproduce_paper2_designs.py   # the configured designs, from stored geometry
+python examples/10_count_balanced.py             # equal counts against count-balanced (~1 min)
 ```
 
-reproduces, against a matched single array of the same `N` and `k`:
+The first reproduces, against a matched single array of the same `N` and `k`:
 
 ```
                                     <7,7>      <5,9>
@@ -229,6 +230,25 @@ it is allowed to differ from the first. On the peak carriage reaction of about
 against 25.3 kN at `k=9`, so the unequal arrays take 14.6 kN and 9.3 kN off the
 guide bearings. `paper2/lateral_load_kn.py` reproduces the conversion.
 
+`10_count_balanced.py` fits both from scratch and shows what the member counts
+add, at `k = 7` and the same width budget:
+
+```
+                                      equal counts  count-balanced
+members, leading : trailing                  7 : 7           8 : 6
+array widths (m)                         1.93/1.95       2.11/1.91
+peak reaction imbalance, geometry            8.22%           2.25%
+  at the end of the stroke                   8.22%           0.07%
+peak reaction imbalance, simulated           7.34%           2.16%
+  in kN of the carriage reaction       17.9 of 244      5.2 of 243
+peak guide moment (kN m)                      21.3            17.7
+peak-to-mean payload force                    1.12            1.12
+```
+
+Two members bought a factor of four on the guide at no cost in force uniformity,
+and the residual at full engagement fell from the mirror residual to
+seven hundredths of a percent.
+
 ### Engagement ordering
 
 Which array engages first is not free. The array that engages first must drive
@@ -239,13 +259,114 @@ against 14.5% at `lambda = 0.3`, and 6.7% against 15.4% at `lambda = 1`. The
 alternation of engagements between the two arrays is a *consequence* of the fit,
 not a constraint imposed on it — a free fit alternates unaided.
 
+### Balance by member count
+
+Fitting balances the two ratio profiles through the middle of the stroke. It
+cannot balance the end of it. Late in the stroke every engaged member tends to
+its asymptote of 2, so each array's ratio tends to twice its member count and
+the reaction imbalance tends to a value the spans have no say in:
+
+```
+eps_terminal = |n1*N1 - n2*N2| / (n1*N1 + n2*N2)
+```
+
+With equal member counts this is the mirror residual `|n1 - n2| / k` again, 14%
+at `k=7`, which is why an equal-count pair cannot be driven to zero however hard
+the fit is pushed. Exact balance at full engagement needs
+
+```
+n1*N1 = n2*N2,        i.e.   N1 : N2 = n2 : n1
+```
+
+the array serving the fewer falls carrying proportionally more members. The
+counts carry the end of the stroke; the fit carries the middle.
+
+```python
+from dualarray_ropecomb import count_floors, count_balanced_counts, terminal_imbalance
+
+count_floors(79.3, 7)            # (7, 5)  - N_j >= G*(d_max) / (4 n_j)
+count_balanced_counts(7, 79.3)   # (8, 6)  - smallest balanced pair above the floors
+terminal_imbalance(3, 7, 4, 7)   # 0.143   - seven and seven, the mirror residual
+terminal_imbalance(3, 8, 4, 6)   # 0.0     - eight and six
+```
+
+At `k=9` the floors `(5, 4)` already stand in the required ratio, so the minimal
+nine-member machine is also the balanced one.
+
+### Seeding unequal arrays
+
+Unequal member counts need a seed that is feasible before the solver starts. A
+dual array at stage ratio `k` with `N1 + N2` members has, late in the stroke,
+about the reach of one array of `N1 + N2` members at stage ratio `k/2`. So the
+seed is a single-array fit at half the stage ratio, its members dealt
+alternately in engagement order, the leading array taking the first member and
+any excess — so that the members it carries beyond alternation engage **last**.
+Dealing them first costs a factor of six in peak imbalance, and dealing them in
+the middle two to five.
+
+Restarts perturb that dealt seed log-normally rather than starting afresh,
+because the seed fit is effectively unique: at half the stage ratio and with a
+generous width cap, independent random starts land on the same geometry to
+within a few millimetres, so fresh random starts explore nothing.
+
+```python
+from dualarray_ropecomb import fit_dual_staged, seed_merged
+from ropecomb import target_profile
+
+spec = target_profile(1000.0, 1.0, v0=10.0, v_end=4.0, stroke_time=0.1)
+
+fit = fit_dual_staged(spec, k=7, N_lo=8, N_hi=6, width_budget=2.11,
+                      lam_balance=0.03, restarts=31)
+print(fit)          # rms 0.41, imbalance 2.3%, widths 2.11/1.91 m
+```
+
+`seed_merged` returns the dealt seed on its own if you want to inspect or
+re-deal it. The equal-count path, seeding from a single-array fit you supply as
+`R_star`/`s_star`, is unchanged.
+
+### Reading the imbalance out of a simulation
+
+The imbalance a fit reports is geometric: `max|n1 G1 - n2 G2| / max(G_net)` at a
+uniform tension, which is what the objective penalises. What the guide carries in
+a run is that ratio difference times the tension the compliant member actually
+delivers, ripple included. `imbalance_trace` returns both.
+
+Each fold is symmetric about its member, so the transverse components of the
+rope tension cancel and every member pushes on the carriage **along** the guide:
+the reaction is axial, and what the bearings feel is its **pitch moment**,
+reacted as a couple over their spacing. `pitch_moment` returns that, given a
+placement of the spans along each array — the ratio is a sum over members and
+does not depend on their order, so the placement is free. Both functions default
+to engagement order outward from the anchor, the order the paper's drawings use,
+which passes the least rope through the contacts.
+
+```python
+from dualarray_ropecomb import CASES, imbalance_trace, pitch_moment
+from ropecomb import simulate_compliant
+
+c = CASES["k7"]
+run = simulate_compliant(c.M, c.m, c.v0, c.ratio_fn(), c.k_rope,
+                         pretension=c.F, max_heavy_dist=c.d_max)
+
+tr = imbalance_trace(c, run)
+tr["eps_geometric"]      # 0.081 - the figure the fit balances
+tr["eps_peak"]           # 0.072 - what the run delivers, tension ripple included
+tr["dF_peak"]            # 17.6 kN out of a 244 kN carriage reaction
+tr["eps_terminal"]       # what the counts leave at full engagement
+
+pm = pitch_moment(c, run, bearing_spacing=1.2)
+pm["moment_peak"], pm["offset_equivalent"], pm["bearing_couple_peak"]
+```
+
 ### What is here
 
 | module | role |
 |---|---|
 | `weighting` | fall counts, `n1`/`n2` splits, the balance condition |
 | `geometry` | dual-array net ratio, width budget, per-array member floors |
-| `fit` | the staged solve, order-preserving parametrisation, two-stage seed |
+| `fit` | the staged solve, order-preserving parametrisation, the merged seed and its restarts |
+| `counts` | member floors, the count condition `n1 N1 = n2 N2`, the count ladder |
+| `balance` | reaction imbalance and pitch moment, read from a run or from geometry |
 | `ordering` | lead assignment, interleaving verification |
 | `parity` | even-against-odd stage comparison, the stage energy index `p/k²` |
 | `cases` | the two configured designs, ready to re-simulate |

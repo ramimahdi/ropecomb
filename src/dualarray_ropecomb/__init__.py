@@ -20,21 +20,28 @@ Quick start
 """
 
 from .cases import CASES, DualCase, load_case
+from .balance import imbalance_trace, member_positions, pitch_moment
+from .counts import (count_balanced_counts, count_floors, count_ladder,
+                     satisfies_count_condition, terminal_imbalance)
 from .fit import (DualFitResult, R_FLOOR, encode, fit_dual, fit_dual_staged,
-                  seed_two_stage)
+                  jitter_seed, seed_merged, seed_two_stage)
 from .geometry import (comb_width, dual_net_ratio, member_floor, net_ratio_fn)
 from .ordering import interleaved_slots, verify_interleaving
 from .parity import energy_index, parity_summary, stage_ratio
 from .weighting import (BalanceRatio, balance_ratio, falls, guide_imbalance,
                         structural_imbalance)
 
-__version__ = "2.0.0"
+__version__ = "3.0.0"
 
 __all__ = [
     "load_case", "CASES", "DualCase",
     "balance_ratio", "BalanceRatio", "falls", "structural_imbalance", "guide_imbalance",
     "dual_net_ratio", "net_ratio_fn", "comb_width", "member_floor",
-    "fit_dual_staged", "fit_dual", "DualFitResult", "seed_two_stage", "encode", "R_FLOOR",
+    "fit_dual_staged", "fit_dual", "DualFitResult", "seed_two_stage", "seed_merged",
+    "jitter_seed", "encode", "R_FLOOR",
+    "terminal_imbalance", "satisfies_count_condition", "count_floors",
+    "count_balanced_counts", "count_ladder",
+    "imbalance_trace", "pitch_moment", "member_positions",
     "interleaved_slots", "verify_interleaving",
     "energy_index", "stage_ratio", "parity_summary",
     "__version__",
